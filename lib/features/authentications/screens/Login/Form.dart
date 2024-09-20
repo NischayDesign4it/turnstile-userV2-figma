@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import the package
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:turnstileuser_v2/common/TButton.dart';
 import 'package:turnstileuser_v2/features/authentications/screens/Signup/signup.dart';
 import 'package:turnstileuser_v2/features/presentations/screens/Dashboard/Dashboard.dart';

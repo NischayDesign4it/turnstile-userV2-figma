@@ -137,6 +137,10 @@ class _TagIDScreenState extends State<TagIDScreen> {
                 cursorColor: TColors.textBlack,
                 style: TextStyle(color: TColors.textBlack),
                 decoration: InputDecoration(
+                  suffixIcon: IconButton(
+                    onPressed: (){_navigateAndScanQr(context);},
+                    icon: Icon(Iconsax.scan_barcode, color: TColors.textBlack),
+                  ),
                   hintText: TTexts.tagId, // Add a hint text for the description
                   hintStyle: TextStyle(color: TColors.textBlack.withOpacity(0.5)), // Hint text style
                   contentPadding: EdgeInsets.symmetric(
@@ -150,10 +154,7 @@ class _TagIDScreenState extends State<TagIDScreen> {
                   ),
                 ),
               ),
-
-            SizedBox(height: 20),
-            TButton(title: "QR", onPressed: (){_navigateAndScanQr(context);}),
-            SizedBox(height: 10),
+            SizedBox(height: TSizes.spaceBtwItems),
             TButton(title: "Submit", onPressed: () async {
               await widget.postData(_tag_idController.text, loggedInUserEmail, context);
             },),

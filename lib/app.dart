@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:turnstileuser_v2/features/authentications/screens/Login/Login.dart';
+import 'package:turnstileuser_v2/features/presentations/screens/entryScreen/entryScreen.dart';
 import 'package:turnstileuser_v2/utils/theme/theme.dart';
 
 
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       theme: TAppTheme.lightTheme,
       darkTheme: TAppTheme.darkTheme,
-      home: LoginScreen(),
+      home: EntryScreen(),
     );
   }
 }

@@ -22,7 +22,7 @@ class TButton extends StatelessWidget {
           style: ElevatedButton.styleFrom(
               backgroundColor: TColors.primaryColorButton,
 
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10),),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               textStyle: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,

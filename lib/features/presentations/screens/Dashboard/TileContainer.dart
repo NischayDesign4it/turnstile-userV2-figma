@@ -4,13 +4,14 @@ import '../../../../utils/constants/colors.dart';
 
 class TileContainer extends StatelessWidget {
   const TileContainer({
-    super.key, required this.title, required this.subTitle, required this.onTap, this.isDone = false,
+    super.key, required this.title, required this.subTitle, required this.onTap, this.isDone = false, required this.isPending,
   });
 
   final String title;
   final String subTitle;
   final VoidCallback onTap;
   final bool isDone;
+  final bool isPending;
 
   @override
   Widget build(BuildContext context) {
@@ -54,6 +55,22 @@ class TileContainer extends StatelessWidget {
                               ),
                               child: Text(
                                 'Done',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          if (isPending) // Show Pending label
+                            Container(
+                              margin: EdgeInsets.only(left: 8.0),
+                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Text(
+                                'Pending',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,

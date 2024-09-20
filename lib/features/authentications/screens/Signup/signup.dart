@@ -32,7 +32,7 @@ class SignupScreen extends StatelessWidget {
               TDivider(dark: dark),
               SizedBox(height: TSizes.spaceBtwItems),
 
-              TSepcialButton()
+              TSepcialButton(dark: dark,)
 
 
 

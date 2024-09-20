@@ -395,7 +395,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController companyNameController = TextEditingController();
-  final TextEditingController companyIdController = TextEditingController();
+  // final TextEditingController companyIdController = TextEditingController();
   final TextEditingController jobRoleController = TextEditingController();
   final TextEditingController jobLocationController = TextEditingController();
 
@@ -437,7 +437,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  Future<void> workerRegister(BuildContext context, String name, String companyName, String jobRole, String myCompanyId, String jobLocation) async {
+  Future<void> workerRegister(BuildContext context, String name, String companyName, String jobRole, String jobLocation) async {
     final String apiUrl = 'http://44.214.230.69:8000/user_profile_api/';
 
     try {
@@ -449,7 +449,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       request.fields['name'] = name;
       request.fields['company_name'] = companyName;
       request.fields['job_role'] = jobRole;
-      request.fields['mycompany_id'] = myCompanyId;
+      // request.fields['mycompany_id'] = myCompanyId;
       request.fields['job_location'] = jobLocation;
       request.fields['email'] = loggedInUserEmail;
       if (selectedDepartment != null) {
@@ -487,7 +487,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             },
           );
           nameController.clear();
-          companyIdController.clear();
+          // companyIdController.clear();
           companyNameController.clear();
           jobLocationController.clear();
           jobRoleController.clear();
@@ -655,33 +655,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
               SizedBox(height: TSizes.spaceBtwItems),
 
               // Worker ID
-              Row(
-                children: [
-                  Icon(Iconsax.user_tag),
-                  SizedBox(width: 5),
-                  Text(TTexts.workerID),
-                ],
-              ),
-              SizedBox(height: TSizes.xs),
-              TextFormField(
-                controller: companyIdController,
-                cursorColor: TColors.textBlack,
-                style: TextStyle(color: TColors.textBlack),
-                decoration: InputDecoration(
-                  hintText: TTexts.workerID,
-                  hintStyle: TextStyle(color: TColors.textBlack.withOpacity(0.5)),
-                  contentPadding: EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 15,
-                  ),
-                  filled: true,
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide.none,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              SizedBox(height: TSizes.spaceBtwItems),
+              // Row(
+              //   children: [
+              //     Icon(Iconsax.user_tag),
+              //     SizedBox(width: 5),
+              //     Text(TTexts.workerID),
+              //   ],
+              // ),
+              // SizedBox(height: TSizes.xs),
+              // TextFormField(
+              //   controller: companyIdController,
+              //   cursorColor: TColors.textBlack,
+              //   style: TextStyle(color: TColors.textBlack),
+              //   decoration: InputDecoration(
+              //     hintText: TTexts.workerID,
+              //     hintStyle: TextStyle(color: TColors.textBlack.withOpacity(0.5)),
+              //     contentPadding: EdgeInsets.symmetric(
+              //       vertical: 12,
+              //       horizontal: 15,
+              //     ),
+              //     filled: true,
+              //     border: OutlineInputBorder(
+              //       borderSide: BorderSide.none,
+              //       borderRadius: BorderRadius.circular(10),
+              //     ),
+              //   ),
+              // ),
+              // SizedBox(height: TSizes.spaceBtwItems),
 
               // Job Role
               Row(
@@ -788,7 +788,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       nameController.text,
                       companyNameController.text,
                       jobRoleController.text,
-                      companyIdController.text,
+                      // companyIdController.text,
                       jobLocationController.text,
                     );
                   },

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
@@ -54,61 +55,17 @@ class FaceEnrollDialog extends StatefulWidget {
 class _FaceEnrollDialogState extends State<FaceEnrollDialog> {
   final ImagePicker _picker = ImagePicker();
   List<XFile> _images = [];
-  CameraController? _cameraController;
-  List<CameraDescription>? _cameras;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeCamera();
-  }
-
-  @override
-  void dispose() {
-    _cameraController?.dispose();
-    super.dispose();
-  }
-
-  Future<void> _initializeCamera() async {
-    _cameras = await availableCameras();
-    _cameraController = CameraController(
-      _cameras!.firstWhere(
-          (camera) => camera.lensDirection == CameraLensDirection.front),
-      ResolutionPreset.high,
-    );
-    await _cameraController?.initialize();
-    setState(() {});
-  }
-
-  Future<void> _takePhoto() async {
-    if (_cameraController == null || !_cameraController!.value.isInitialized) {
-      return;
-    }
-
-    final pickedFile = await _cameraController?.takePicture();
-    if (pickedFile != null) {
-      final originalImage =
-          img.decodeImage(File(pickedFile.path).readAsBytesSync());
-      if (originalImage != null) {
-        debugPrint(
-            'Original image dimensions: ${originalImage.width}x${originalImage.height} pixels');
-        final resizedImage = await _resizeImage(File(pickedFile.path));
-        final resizedImageDimensions = img.decodeImage(resizedImage);
-        if (resizedImageDimensions != null) {
-          debugPrint(
-              'Resized image dimensions: ${resizedImageDimensions.width}x${resizedImageDimensions.height} pixels');
-        }
-        setState(() {
-          _images.add(XFile.fromData(resizedImage, path: pickedFile.path));
-        });
-      }
-    }
-  }
+  bool _isProcessing = false;
 
   Future<void> _pickImage() async {
     final pickedFiles = await _picker.pickMultiImage();
     if (pickedFiles != null && pickedFiles.isNotEmpty) {
-      for (var pickedFile in pickedFiles) {
+      setState(() {
+        _isProcessing = true; // Show loading indicator
+      });
+
+      // Process images in parallel
+      final futures = pickedFiles.map((pickedFile) async {
         final originalImage =
             img.decodeImage(File(pickedFile.path).readAsBytesSync());
         if (originalImage != null) {
@@ -120,11 +77,20 @@ class _FaceEnrollDialogState extends State<FaceEnrollDialog> {
             debugPrint(
                 'Resized image dimensions: ${resizedImageDimensions.width}x${resizedImageDimensions.height} pixels');
           }
-          setState(() {
-            _images.add(XFile.fromData(resizedImage, path: pickedFile.path));
-          });
+          return XFile.fromData(resizedImage, path: pickedFile.path);
         }
-      }
+        return null;
+      }).toList();
+
+      final results = await Future.wait(futures);
+
+      setState(() {
+        _images.addAll(results.whereType<XFile>());
+        _isProcessing = false; // Hide loading indicator
+      });
+
+      // Navigate to SelectedImagesScreen
+      Get.to(() => SelectedImagesScreen(images: _images));
     }
   }
 
@@ -139,7 +105,6 @@ class _FaceEnrollDialogState extends State<FaceEnrollDialog> {
     if (_images.isNotEmpty) {
       Get.to(() => SelectedImagesScreen(images: _images));
     } else {
-      // Show a message if no images are selected
       Get.snackbar('No Images', 'Please select or take at least one image.',
           colorText: TColors.textWhite, backgroundColor: TColors.textBlack);
     }
@@ -167,7 +132,6 @@ class _FaceEnrollDialogState extends State<FaceEnrollDialog> {
                 IconButton(
                   icon: Icon(Icons.close),
                   onPressed: () {
-                    // Close the dialog
                     Get.back();
                   },
                 ),
@@ -179,8 +143,11 @@ class _FaceEnrollDialogState extends State<FaceEnrollDialog> {
                 GestureDetector(
                   onTap: () async {
                     await Get.to(() => CameraScreen(
-                          onImageCaptured: (XFile file) {
-                            _resizeAndAddImage(file);
+                          onImagesCaptured: (List<XFile> files) {
+                            setState(() {
+                              _images.addAll(files);
+                            });
+                            _showSelectedImages();
                           },
                         ));
                   },
@@ -229,29 +196,12 @@ class _FaceEnrollDialogState extends State<FaceEnrollDialog> {
       ),
     );
   }
-
-  Future<void> _resizeAndAddImage(XFile file) async {
-    final originalImage = img.decodeImage(File(file.path).readAsBytesSync());
-    if (originalImage != null) {
-      debugPrint(
-          'Original image dimensions: ${originalImage.width}x${originalImage.height} pixels');
-      final resizedImage = await _resizeImage(File(file.path));
-      final resizedImageDimensions = img.decodeImage(resizedImage);
-      if (resizedImageDimensions != null) {
-        debugPrint(
-            'Resized image dimensions: ${resizedImageDimensions.width}x${resizedImageDimensions.height} pixels');
-      }
-      setState(() {
-        _images.add(XFile.fromData(resizedImage, path: file.path));
-      });
-    }
-  }
 }
 
 class CameraScreen extends StatefulWidget {
-  final Function(XFile) onImageCaptured;
+  final Function(List<XFile>) onImagesCaptured;
 
-  const CameraScreen({required this.onImageCaptured, Key? key})
+  const CameraScreen({required this.onImagesCaptured, Key? key})
       : super(key: key);
 
   @override
@@ -261,6 +211,7 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
+  List<XFile> _capturedImages = [];
 
   @override
   void initState() {
@@ -278,12 +229,42 @@ class _CameraScreenState extends State<CameraScreen> {
     _cameras = await availableCameras();
     _cameraController = CameraController(
       _cameras!.firstWhere(
-          (camera) => camera.lensDirection == CameraLensDirection.front),
+              (camera) => camera.lensDirection == CameraLensDirection.front),
       ResolutionPreset.high,
     );
     await _cameraController?.initialize();
     setState(() {});
   }
+
+  // Future<void> _initializeCamera() async {
+  //   try {
+  //     _cameras = await availableCameras();
+  //
+  //     // Check if any camera is available
+  //     if (_cameras == null || _cameras!.isEmpty) {
+  //       throw Exception('No cameras found on the device.');
+  //     }
+  //
+  //     // Try to get the front camera, or fallback to the first available one
+  //     CameraDescription selectedCamera = _cameras!.firstWhere(
+  //       (camera) => camera.lensDirection == CameraLensDirection.front,
+  //       orElse: () => _cameras!.first, // Fallback to the first available camera
+  //     );
+  //
+  //     _cameraController = CameraController(
+  //       selectedCamera,
+  //       ResolutionPreset.high,
+  //     );
+  //     await _cameraController?.initialize();
+  //     setState(() {});
+  //   } catch (e) {
+  //     // Handle errors here
+  //     print('Error initializing camera: $e');
+  //     Get.snackbar(
+  //         'Camera Error', 'Failed to initialize the camera. Please try again.',
+  //         colorText: TColors.textWhite, backgroundColor: TColors.textBlack);
+  //   }
+  // }
 
   Future<void> _takePhoto() async {
     if (_cameraController == null || !_cameraController!.value.isInitialized) {
@@ -292,9 +273,19 @@ class _CameraScreenState extends State<CameraScreen> {
 
     final pickedFile = await _cameraController?.takePicture();
     if (pickedFile != null) {
-      widget.onImageCaptured(pickedFile);
-      Get.back();
+      final resizedImage = await _resizeImage(File(pickedFile.path));
+      setState(() {
+        _capturedImages
+            .add(XFile.fromData(resizedImage, path: pickedFile.path));
+      });
     }
+  }
+
+  Future<Uint8List> _resizeImage(File file) async {
+    final image = img.decodeImage(file.readAsBytesSync());
+    final resizedImage =
+        img.copyResize(image!, width: 480); // Resize to 480 pixels wide
+    return Uint8List.fromList(img.encodeJpg(resizedImage));
   }
 
   @override
@@ -310,7 +301,6 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     return Scaffold(
-      // appBar: AppBar(title: Text('Camera')),
       body: Stack(
         children: [
           Container(
@@ -322,21 +312,80 @@ class _CameraScreenState extends State<CameraScreen> {
             painter: FaceShapePainter(),
             child: Container(),
           ),
+          Positioned(
+              left: 50,
+              top: 50,
+              child: Text(
+                "Note: Please click atleast 3 images",
+                style: TextStyle(
+                    fontSize: 18,
+                    color: TColors.textWhite,
+                    fontWeight: FontWeight.bold),
+              )),
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: const EdgeInsets.all(30.0),
-              child: FloatingActionButton(
-                backgroundColor: TColors.primaryColorButton,
-                child: Icon(Iconsax.camera, color: TColors.textWhite),
-                onPressed: _takePhoto,
-                shape: CircleBorder(),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 25.0, vertical: 25),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Images Captured: ${_capturedImages.length}',
+                    style: TextStyle(
+                        fontSize: 18,
+                        color: TColors.primaryColorButton,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  FloatingActionButton(
+                    backgroundColor: TColors.primaryColorButton,
+                    child: Icon(Iconsax.camera, color: TColors.textWhite),
+                    onPressed: _takePhoto,
+                    shape: CircleBorder(),
+                  ),
+                  FloatingActionButton(
+                    backgroundColor: TColors.primaryColorButton,
+                    child: Text(
+                      "Done",
+                      style: TextStyle(color: TColors.textWhite),
+                    ),
+                    onPressed: () {
+                      widget.onImagesCaptured(_capturedImages);
+                    },
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ],
               ),
             ),
           ),
         ],
       ),
     );
+  }
+}
+
+class FaceShapePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = TColors.primaryColorButton
+      ..strokeWidth = 5.0
+      ..style = PaintingStyle.stroke;
+
+    final Rect rect = Rect.fromLTWH(
+      size.width * 0.1, // Adjust the position and size as needed
+      size.height * 0.1,
+      size.width * 0.8,
+      size.height * 0.6,
+    );
+
+    canvas.drawOval(rect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
   }
 }
 
@@ -349,48 +398,59 @@ class SelectedImagesScreen extends StatefulWidget {
   _SelectedImagesScreenState createState() => _SelectedImagesScreenState();
 }
 
-
 class _SelectedImagesScreenState extends State<SelectedImagesScreen> {
-
   final DashboardController dashboardController =
-  Get.find<DashboardController>();
+      Get.find<DashboardController>();
   bool _isLoading = false;
+
 
   Future<void> _uploadImages() async {
     setState(() {
       _isLoading = true;
     });
 
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse('http://44.214.230.69:8000/face_api/'),
-    );
-    request.fields['email'] =
-        loggedInUserEmail; // Replace with actual user email
-    for (var image in widget.images) {
-      request.files.add(await http.MultipartFile.fromPath(
-        'facial_data',
-        image.path,
-      ));
-    }
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://44.214.230.69:8000/face_api/'),
+      );
+      request.fields['email'] = loggedInUserEmail; // Replace with actual user email
 
-    var response = await request.send();
-    if (response.statusCode == 200) {
+      for (var image in widget.images) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'facial_data',
+          image.path,
+        ));
+      }
+
+      var response = await request.send();
+
+      // Read the response data
+      var responseData = await http.Response.fromStream(response);
+      if (response.statusCode == 200) {
+        setState(() {
+          widget.images.clear();
+          _isLoading = false;
+        });
+        dashboardController.completeFace();
+        _showDialog("Success", "Images are uploaded successfully.", true);
+        print('Images uploaded successfully');
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        _showDialog("Error", "Please upload the proper information.", false);
+        print('Image upload failed: ${responseData.body}');
+      }
+    } catch (e) {
       setState(() {
-        widget.images.clear();
         _isLoading = false;
       });
-      dashboardController.completeFace();
-      _showDialog("Success", "Images are uploaded successfully.", true);
-      print('Images uploaded successfully');
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-      _showDialog("Error", "Please upload the proper information.", false);
-      print('Image upload failed');
+      _showDialog("Error", "Something went wrong. Please try again.", false);
+      print('Image upload failed with exception: $e');
     }
   }
+
 
   void _removeImage(int index) {
     setState(() {
@@ -431,90 +491,65 @@ class _SelectedImagesScreenState extends State<SelectedImagesScreen> {
       ),
       body: _isLoading
           ? Center(
-        child: CircularProgressIndicator(
-          color: TColors.primaryColorButton,
-        ),
-      )
-          : Column(
-        children: [
-          Expanded(
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                crossAxisSpacing: 4,
-                mainAxisSpacing: 4,
+              child: CircularProgressIndicator(
+                color: TColors.primaryColorButton,
               ),
-              itemCount: widget.images.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Stack(
-                    children: [
-                      Image.file(
-                        File(widget.images[index].path),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                      ),
-                      Positioned(
-                        top: 4,
-                        right: 4,
-                        child: GestureDetector(
-                          onTap: () => _removeImage(index),
-                          child: Container(
-                            padding: EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
+            )
+          : Column(
+              children: [
+                Expanded(
+                  child: GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 4,
+                      mainAxisSpacing: 4,
+                    ),
+                    itemCount: widget.images.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Stack(
+                          children: [
+                            Image.file(
+                              File(widget.images[index].path),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
                             ),
-                            child: Icon(
-                              Icons.close,
-                              size: 16,
-                              color: Colors.black,
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: GestureDetector(
+                                onTap: () => _removeImage(index),
+                                child: Container(
+                                  padding: EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 16,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(30.0),
+                  child: TButton(
+                    title: 'Upload Images',
+                    onPressed: _uploadImages,
+                  ),
+                ),
+              ],
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(30.0),
-            child: TButton(
-              title: 'Upload Images',
-              onPressed: _uploadImages,
-            ),
-          ),
-        ],
-      ),
     );
-  }
-}
-
-
-class FaceShapePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = TColors.primaryColorButton
-      ..strokeWidth = 5.0
-      ..style = PaintingStyle.stroke;
-
-    final Rect rect = Rect.fromLTWH(
-      size.width * 0.1, // Adjust the position and size as needed
-      size.height * 0.1,
-      size.width * 0.8,
-      size.height * 0.6,
-    );
-
-    canvas.drawOval(rect, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
   }
 }

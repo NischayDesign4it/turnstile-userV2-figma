@@ -30,8 +30,8 @@ class TTexts{
   static const String faceSubtitle = "Upload the image";
   static const String orientation = "Orientation";
   static const String orientationSubtitle = "Fill out Orientation";
-  static const String myComply  = "MyComply validity";
-  static const String myComplySubtitle  = "Scan MyComply validity";
+  static const String myComply  = "SST";
+  static const String myComplySubtitle  = "Scan SST validity";
   static const String signature  = "Digital signature";
   static const String signatureSubtitle  = "Provide your Digital signature";
   static const String approval  = "Approval";

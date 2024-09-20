@@ -9,6 +9,7 @@ class DashboardController extends GetxController {
   var isOrientationDone = false.obs;
   var isMyComplyDone = false.obs;
   var isTagIdDone = false.obs;
+  var isCheckboxEnabled = false.obs;
 
   @override
   void onInit() {
@@ -65,7 +66,6 @@ class DashboardController extends GetxController {
         if (responseData['name'] != null && responseData['name'].toString().isNotEmpty &&
             responseData['company_name'] != null && responseData['company_name'].toString().isNotEmpty &&
             responseData['job_role'] != null && responseData['job_role'].toString().isNotEmpty &&
-            responseData['mycompany_id'] != null && responseData['mycompany_id'].toString().isNotEmpty &&
             responseData['job_location'] != null && responseData['job_location'].toString().isNotEmpty) {
           completeProfile();
         }
@@ -89,3 +89,5 @@ class DashboardController extends GetxController {
     }
   }
 }
+
+

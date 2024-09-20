@@ -33,7 +33,7 @@ class LoginScreen extends StatelessWidget {
                 TLoginForm(dark: dark),
                 TDivider(dark: dark),
                 SizedBox(height: TSizes.spaceBtwItems),
-                TSepcialButton(),
+                TSepcialButton(dark: dark),
               ],
             )));
   }
