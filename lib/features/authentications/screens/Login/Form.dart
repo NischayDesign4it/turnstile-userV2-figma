@@ -9,6 +9,7 @@ import 'package:turnstileuser_v2/utils/constants/colors.dart';
 import 'package:turnstileuser_v2/utils/constants/sizes.dart';
 import 'package:turnstileuser_v2/utils/constants/text_strings.dart';
 import '../../controllers/login_controller.dart';
+import '../forgotPassword.dart';
 
 class TLoginForm extends StatefulWidget {
   final bool dark;
@@ -157,7 +158,9 @@ class _TLoginFormState extends State<TLoginForm> {
                   ],
                 ),
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () {
+                    Get.to(() => ForgotPassword());
+                  },
                   child: Text(TTexts.forgotPassword),
                 ),
               ],

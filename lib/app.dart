@@ -3,6 +3,9 @@ import 'package:get/get.dart';
 import 'package:turnstileuser_v2/features/presentations/screens/entryScreen/entryScreen.dart';
 import 'package:turnstileuser_v2/utils/theme/theme.dart';
 
+import 'features/authentications/screens/forgotPassword.dart';
+import 'features/authentications/screens/new_password.dart';
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -14,7 +17,8 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       theme: TAppTheme.lightTheme,
       darkTheme: TAppTheme.darkTheme,
-      home: EntryScreen(),
+      // home: EntryScreen(),
+      home: ForgotPassword(),
     );
   }
 }

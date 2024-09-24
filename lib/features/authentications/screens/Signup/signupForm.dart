@@ -8,6 +8,7 @@ import 'package:turnstileuser_v2/utils/constants/colors.dart';
 import 'package:turnstileuser_v2/utils/constants/sizes.dart';
 import 'package:turnstileuser_v2/utils/constants/text_strings.dart';
 import '../../controllers/signup_Controller.dart';
+import '../forgotPassword.dart';
 
 class TSignupForm extends StatefulWidget {
   TSignupForm({Key? key}) : super(key: key);
@@ -161,7 +162,9 @@ class _TSignupFormState extends State<TSignupForm> {
                   ],
                 ),
                 GestureDetector(
-                  onTap: () {},
+                  onTap: () {
+                    Get.to(() => ForgotPassword());
+                  },
                   child: Text(TTexts.forgotPassword),
                 ),
               ],
